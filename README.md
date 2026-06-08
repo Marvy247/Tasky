@@ -38,6 +38,21 @@ cp .env.example .env
 npx hardhat run scripts/deploy.ts --network celo
 ```
 
+## Activity Scripts (100 Accounts)
+
+Requires `MNEMONIC` in `.env` — derives 100 accounts via HD path `m/44'/60'/0'/0/i`.
+
+```bash
+# 1. Fund all 100 accounts from master wallet (0.05 CELO each)
+node scripts/activity/fund-accounts.cjs
+
+# 2. Generate contract interactions across all accounts
+node scripts/activity/generate-activity.cjs
+
+# 3. Drain all accounts back to master
+node scripts/activity/drain-accounts.cjs
+```
+
 ## Tech Stack
 
 - Solidity 0.8.24
