@@ -27,10 +27,15 @@ async function sendTx(wallet, contractName, fn, args, value) {
   try {
     const overrides = value ? { value } : {};
     const tx = await contract[fn](...args, overrides);
-    console.log(`  ✅ https://explorer.celo.org/mainnet/tx/${tx.hash}`);
+    console.log(`  ✅ ${EXPLORER}/${tx.hash}`);
     await sleep(2000);
   } catch (e) {
-    console.error(`  ❌ [${contractName}.${fn}] ${e.shortMessage ?? e.message?.slice(0, 80)}`);
+    const msg = e.message ?? '';
+    if (msg.includes('nonce has already been used')) {
+      console.log(`  ✅ (tx already mined)`);
+      return;
+    }
+    console.error(`  ❌ [${contractName}.${fn}] ${e.shortMessage ?? msg.slice(0, 80)}`);
   }
 }
 
