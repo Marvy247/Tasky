@@ -85,7 +85,7 @@ async function main() {
   const startIndex = (Math.floor(Date.now() / 1000 / 60) * BATCH_SIZE) % NUM_ACCOUNTS;
   const indices = Array.from({ length: BATCH_SIZE }, (_, i) => (startIndex + i) % NUM_ACCOUNTS);
 
-  console.log(`Running wallets [${indices[0]}–${indices[indices.length - 1]}]`);
+  console.log(`Running wallets [${indices[0]}–${indices[indices.length - 1]}] of ${NUM_ACCOUNTS}`);
   for (const idx of indices) {
     await runWallet(accounts, idx);
     await sleep(500);
