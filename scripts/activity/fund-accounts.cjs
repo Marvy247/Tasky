@@ -58,7 +58,9 @@ async function main() {
   }
 
   const finalBal = await getBalance(master.address);
-  console.log(`\nMaster remaining: ${ethers.formatEther(finalBal)} CELO\nDone!`);
+  const totalSent = masterBal - finalBal;
+  console.log(`\nTotal sent: ${ethers.formatEther(totalSent)} CELO`);
+  console.log(`Master remaining: ${ethers.formatEther(finalBal)} CELO\nDone!`);
 }
 
 main().catch(e => { console.error(e.message); process.exit(1); });
