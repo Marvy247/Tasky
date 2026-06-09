@@ -36,7 +36,7 @@ async function main() {
   const targetPerAccount = distributable / BigInt(targets.length);
 
   console.log(`Distributable: ${ethers.formatEther(distributable)} CELO`);
-  console.log(`Target per account: ${ethers.formatEther(targetPerAccount)} CELO\n`);
+  console.log(`Target per account: ${ethers.formatEther(targetPerAccount)} CELO (~${(Number(ethers.formatEther(targetPerAccount))).toFixed(4)} CELO)\n`);
 
   let nonce = await provider.getTransactionCount(master.address);
 
