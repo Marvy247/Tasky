@@ -18,8 +18,11 @@ Strade decentralized marketplace smart contracts deployed on the Celo blockchain
 
 | Contract | Address |
 |----------|---------|
+| BSTToken | [`0x0dbFcf01d067A075b12c8CFd05dAA2D4071e1003`](https://explorer.celo.org/mainnet/address/0x0dbFcf01d067A075b12c8CFd05dAA2D4071e1003) |
 | CoreMarketPlace | [`0x01FAD87943D1303E0083391eF4E43Cee8dB06A72`](https://explorer.celo.org/mainnet/address/0x01FAD87943D1303E0083391eF4E43Cee8dB06A72) |
 | EscrowService | [`0x983AB59ab1Ae967E34d72d57E3fF65b411Ad0D5B`](https://explorer.celo.org/mainnet/address/0x983AB59ab1Ae967E34d72d57E3fF65b411Ad0D5B) |
+| DisputeResolution | [`0xA54B034b0cECD0877cc2d43fe3D1E1EB3A5cD561`](https://explorer.celo.org/mainnet/address/0xA54B034b0cECD0877cc2d43fe3D1E1EB3A5cD561) |
+| UserProfile | [`0x7DaE559f4acE0579121C22de722d1E97A6957069`](https://explorer.celo.org/mainnet/address/0x7DaE559f4acE0579121C22de722d1E97A6957069) |
 
 **Deployer:** `0x27A2dD1823D883935c9824fbaC0a018cE8e891E5`
 
