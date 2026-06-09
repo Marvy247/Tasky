@@ -1,30 +1,30 @@
 #!/usr/bin/env node
-/**
- * Drain all 100 accounts back to master wallet
- * Usage: node scripts/activity/drain-accounts.cjs
- * Requires MNEMONIC in .env
- */
+// Drain all 100 accounts back to master wallet
+// Usage: node scripts/activity/drain-accounts.cjs
 const { ethers } = require("ethers");
-const { getProvider, deriveAccounts, getMasterWallet, NUM_ACCOUNTS, sleep } = require("./config.cjs");
+const { withRpcFallback, deriveAccounts, getMasterWallet, NUM_ACCOUNTS, sleep } = require("./config.cjs");
 
 const GAS_LIMIT = 21000n;
-const GAS_PRICE = ethers.parseUnits("1", "gwei");
-const GAS_COST = GAS_LIMIT * GAS_PRICE;
 
 async function main() {
-  const provider = getProvider();
+  const provider = await withRpcFallback(p => p.getBlockNumber().then(() => p));
   const master = getMasterWallet(provider);
   const accounts = deriveAccounts(provider);
 
-  console.log(`Draining ${NUM_ACCOUNTS} accounts → ${master.address}\n`);
+  const block = await provider.getBlock("latest");
+  const gasPrice = (block.baseFeePerGas ?? ethers.parseUnits("200", "gwei")) * 2n;
+  const gasCost = GAS_LIMIT * gasPrice;
 
-  for (let i = 0; i < NUM_ACCOUNTS; i++) {
-    const wallet = accounts[i];
+  console.log(`Draining ${NUM_ACCOUNTS} accounts → ${master.address}`);
+  console.log(`Gas price: ${ethers.formatUnits(gasPrice, "gwei")} gwei\n`);
+
+  for (let i = 1; i < NUM_ACCOUNTS; i++) { // skip account 0 (master)
+    const wallet = accounts[i].connect(provider);
     const bal = await provider.getBalance(wallet.address);
-    const sendAmount = bal - GAS_COST;
+    const sendAmount = bal - gasCost;
 
     if (sendAmount <= 0n) {
-      console.log(`Account ${i}: ${wallet.address} — skipped (${ethers.formatEther(bal)} CELO)`);
+      console.log(`Account ${i}: skipped (${ethers.formatEther(bal)} CELO)`);
       continue;
     }
 
@@ -33,15 +33,17 @@ async function main() {
         to: master.address,
         value: sendAmount,
         gasLimit: GAS_LIMIT,
-        gasPrice: GAS_PRICE,
+        gasPrice,
       });
-      console.log(`✅ Account ${i}: ${wallet.address} — drained ${ethers.formatEther(sendAmount)} CELO (${tx.hash})`);
+      console.log(`✅ Account ${i}: drained ${ethers.formatEther(sendAmount)} CELO → ${tx.hash}`);
     } catch (e) {
-      console.error(`❌ Account ${i}: ${wallet.address} — ${e.message?.slice(0, 60)}`);
+      console.error(`❌ Account ${i}: ${e.message?.slice(0, 80)}`);
     }
-    await sleep(500);
+    await sleep(300);
   }
-  console.log("\nDone!");
+
+  const finalBal = await provider.getBalance(master.address);
+  console.log(`\nMaster balance: ${ethers.formatEther(finalBal)} CELO\nDone!`);
 }
 
 main().catch(e => { console.error(e.message); process.exit(1); });
