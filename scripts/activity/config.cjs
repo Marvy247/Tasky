@@ -14,6 +14,7 @@ const RPCS = [
   "https://forno.celo.org",
   "https://rpc.ankr.com/celo",
   "https://celo.drpc.org",
+  "https://1rpc.io/celo",
 ];
 
 function getProvider() {
