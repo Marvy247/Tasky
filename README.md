@@ -29,8 +29,8 @@ Strade decentralized marketplace smart contracts deployed on the Celo blockchain
 ## Contracts
 
 - **BSTToken** — ERC-20 token (BST), 1 trillion supply, 6 decimals, pausable
-- **CoreMarketPlace** — Create, update, cancel and purchase listings with native CELO
-- **EscrowService** — Trustless escrow (~7 day duration), buyer/owner release or refund
+- **CoreMarketPlace** — Create, update, cancel and purchase listings with CELO or G$
+- **EscrowService** — Trustless escrow (~7 day duration), supports CELO and G$, buyer/owner release or refund
 - **DisputeResolution** — Arbitrator voting system, 24h voting period, min 3 votes
 - **UserProfile** — User registration, 5-star ratings, reputation scoring
 
