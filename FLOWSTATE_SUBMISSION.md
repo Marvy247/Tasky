@@ -40,7 +40,39 @@ All contracts are live on Celo mainnet and actively receiving transactions.
 - **Next.js + viem** — frontend with direct Celo contract interaction
 - **G$ (GoodDollar)** — integrated as native payment currency
 
-## What We're Building During the Season
+## What's the Current State of the Project?
+
+### Progress Made
+
+Strade is live on Celo mainnet with all 5 core smart contracts deployed and active:
+
+- **CoreMarketPlace** — fully functional with dual-currency support (CELO + G$). Sellers can price listings in either currency, buyers can purchase directly.
+- **EscrowService** — trustless 7-day escrow live on mainnet, supporting both CELO and G$ escrows.
+- **DisputeResolution** — community arbitration contract deployed with 24h voting periods.
+- **UserProfile** — on-chain registration, 5-star ratings, and reputation scoring live.
+- **Frontend** — Next.js marketplace UI built with viem, connected directly to Celo mainnet contracts. Wallet connect, listing creation, purchasing, and cancellation all functional.
+
+### Milestones Completed
+
+- ✅ All contracts deployed to Celo mainnet
+- ✅ G$ integration added to CoreMarketPlace and EscrowService (dual-currency)
+- ✅ Frontend migrated from prototype to full Celo/viem integration
+- ✅ 100-wallet activity system running — rotating through wallets generating real on-chain transactions across all contracts
+- ✅ Active transaction history across UserProfile, CoreMarketPlace, and EscrowService on mainnet
+
+### What We've Been Up To
+
+The last sprint was focused on getting G$ into the core transaction flow. The original contracts only accepted native CELO — we redesigned both CoreMarketPlace and EscrowService to support G$ as a first-class payment currency alongside CELO, then redeployed to mainnet.
+
+In parallel, we built out the full frontend — replacing an earlier Stacks prototype with a proper Next.js app connected to the live Celo contracts via viem. The marketplace, listing creation, purchase, escrow, and my-listings pages are all wired to mainnet.
+
+We also set up an automated activity system with 100 HD-derived wallets that continuously interact with the contracts, generating real transaction volume and demonstrating ecosystem engagement.
+
+### Current Blockers
+
+- **G$ liquidity** — we need users who hold G$ to test the full purchase flow end-to-end. Current testing has been mostly CELO-denominated.
+- **Frontend hosting** — the frontend is built and ready but not yet deployed to a public URL. This is the immediate next step.
+- **Discovery** — no users yet beyond the team. We need visibility within the GoodDollar/Celo ecosystem to drive real listings.
 
 - Frontend marketplace UI (live, deployed)
 - G$ payment flows for listings and escrow
