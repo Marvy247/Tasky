@@ -1,6 +1,6 @@
-# StraCel — Strade Marketplace on Celo
+# StraCel — Stracel Marketplace on Celo
 
-Strade decentralized marketplace smart contracts deployed on the Celo blockchain.
+Stracel decentralized marketplace smart contracts deployed on the Celo blockchain.
 
 ## Deployed Contracts (Celo Mainnet)
 

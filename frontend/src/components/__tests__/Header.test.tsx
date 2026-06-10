@@ -28,7 +28,7 @@ describe('Header Component', () => {
   it('renders the header with logo and navigation', () => {
     render(<Header />);
     
-    expect(screen.getByText('Strade')).toBeInTheDocument();
+    expect(screen.getByText('Stracel')).toBeInTheDocument();
     expect(screen.getByText('Decentralized Marketplace')).toBeInTheDocument();
     expect(screen.getByText('Marketplace')).toBeInTheDocument();
     expect(screen.getByText('My Listings')).toBeInTheDocument();

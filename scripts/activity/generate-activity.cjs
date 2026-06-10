@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Celo Activity Generator — interacts with deployed Strade contracts
+ * Celo Activity Generator — interacts with deployed Stracel contracts
  * One wallet per run, rotated by minute across 100 derived accounts.
  * Usage: node scripts/activity/generate-activity.cjs
  * Requires MNEMONIC in .env

@@ -44,7 +44,7 @@ All contracts are live on Celo mainnet and actively receiving transactions.
 
 ### Progress Made
 
-Strade is live on Celo mainnet with all 5 core smart contracts deployed and active:
+Stracel is live on Celo mainnet with all 5 core smart contracts deployed and active:
 
 - **CoreMarketPlace** — fully functional with dual-currency support (CELO + G$). Sellers can price listings in either currency, buyers can purchase directly.
 - **EscrowService** — trustless 7-day escrow live on mainnet, supporting both CELO and G$ escrows.

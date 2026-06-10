@@ -30,7 +30,7 @@ const steps = [
     details: [
       'Install Leather wallet extension',
       'Create or import your wallet',
-      'Connect to Strade with one click',
+      'Connect to Stracel with one click',
       'Your wallet, your keys, your control'
     ]
   },
@@ -107,10 +107,10 @@ export default function HowItWorksPage() {
               variants={fadeInUp}
             >
               <h1 className="text-4xl sm:text-5xl font-bold text-black dark:text-white mb-6">
-                How Strade Works
+                How Stracel Works
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                Trading on Strade is simple, secure, and completely decentralized.
+                Trading on Stracel is simple, secure, and completely decentralized.
                 Here's everything you need to know.
               </p>
             </motion.div>
@@ -192,7 +192,7 @@ export default function HowItWorksPage() {
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
                 Traditional marketplaces require you to trust a middleman.
-                Strade eliminates this need entirely.
+                Stracel eliminates this need entirely.
               </p>
             </motion.div>
 

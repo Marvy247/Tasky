@@ -4,12 +4,12 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Strade - Decentralized Marketplace on Celo",
+  title: "Stracel - Decentralized Marketplace on Celo",
   description: "Buy and sell goods securely on the Celo blockchain. A decentralized marketplace with escrow, dispute resolution, and reputation system.",
   keywords: ["blockchain", "marketplace", "celo", "decentralized", "web3", "crypto", "gdollar", "defi"],
-  authors: [{ name: "Strade Team" }],
+  authors: [{ name: "Stracel Team" }],
   openGraph: {
-    title: "Strade - Decentralized Marketplace on Celo",
+    title: "Stracel - Decentralized Marketplace on Celo",
     description: "Buy and sell goods securely on the Celo blockchain",
     type: "website",
   },

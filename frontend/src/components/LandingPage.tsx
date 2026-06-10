@@ -224,7 +224,7 @@ export default function LandingPage() {
               variants={fadeInUp}
               className="text-lg text-gray-600 dark:text-gray-400"
             >
-              Trading on Strade is simple and secure
+              Trading on Stracel is simple and secure
             </motion.p>
           </motion.div>
 

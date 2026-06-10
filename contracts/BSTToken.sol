@@ -17,7 +17,7 @@ contract BSTToken is ERC20, Ownable {
         _;
     }
 
-    constructor() ERC20("Strade Token", "BST") Ownable(msg.sender) {
+    constructor() ERC20("Stracel Token", "BST") Ownable(msg.sender) {
         _mint(msg.sender, 1_000_000_000_000 * 10 ** 6);
     }
 

@@ -33,7 +33,7 @@ export default function AboutPage() {
                 Decentralized Commerce
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                Strade is a decentralized marketplace built on the Stacks blockchain,
+                Stracel is a decentralized marketplace built on the Stacks blockchain,
                 enabling secure peer-to-peer transactions without intermediaries.
               </p>
             </motion.div>
@@ -59,7 +59,7 @@ export default function AboutPage() {
                   entities that charge high fees, censor content, and own your data.
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Strade empowers users to trade directly with each other using blockchain
+                  Stracel empowers users to trade directly with each other using blockchain
                   technology, eliminating middlemen while ensuring security through smart
                   contracts and community governance.
                 </p>

@@ -9,8 +9,8 @@ import { HelpCircle, Shield, Wallet, ShoppingCart, AlertTriangle } from 'lucide-
 export default function HelpPage() {
   const faqs = [
     {
-      question: 'What is Strade?',
-      answer: 'Strade is a decentralized marketplace built on the Stacks blockchain. It allows users to buy and sell goods securely using smart contracts, without the need for intermediaries.',
+      question: 'What is Stracel?',
+      answer: 'Stracel is a decentralized marketplace built on the Stacks blockchain. It allows users to buy and sell goods securely using smart contracts, without the need for intermediaries.',
     },
     {
       question: 'How do I connect my wallet?',
@@ -34,11 +34,11 @@ export default function HelpPage() {
     },
     {
       question: 'Is this real money?',
-      answer: 'Currently, Strade is running on the Stacks testnet. The STX tokens used have no real value and are only for testing purposes. DO NOT use real assets on the testnet.',
+      answer: 'Currently, Stracel is running on the Stacks testnet. The STX tokens used have no real value and are only for testing purposes. DO NOT use real assets on the testnet.',
     },
     {
       question: 'What are gas fees?',
-      answer: 'Gas fees are transaction costs paid to process your transaction on the blockchain. These fees go to network miners, not to Strade. Your wallet will show you the estimated fee before you confirm any transaction.',
+      answer: 'Gas fees are transaction costs paid to process your transaction on the blockchain. These fees go to network miners, not to Stracel. Your wallet will show you the estimated fee before you confirm any transaction.',
     },
   ];
 
@@ -63,7 +63,7 @@ export default function HelpPage() {
             <h1 className="text-3xl font-bold text-slate-900">Help & FAQ</h1>
           </div>
           <p className="text-slate-600">
-            Everything you need to know about using Strade marketplace
+            Everything you need to know about using Stracel marketplace
           </p>
         </div>
 
@@ -147,7 +147,7 @@ export default function HelpPage() {
           <CardHeader>
             <CardTitle>Still need help?</CardTitle>
             <CardDescription>
-              We're here to help you get the most out of Strade
+              We're here to help you get the most out of Stracel
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-slate-600">
