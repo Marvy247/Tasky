@@ -92,7 +92,7 @@ export default function MarketplacePage() {
         abi: MARKETPLACE_ABI,
         functionName: 'purchaseListing',
         args: [BigInt(listingId)],
-        value: listing.currency === 0 ? listing.price : 0n,
+        value: listing.price,
         account: addr as `0x${string}`,
       });
       toast.dismiss();

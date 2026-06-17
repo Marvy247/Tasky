@@ -14,7 +14,6 @@ interface ListingCardProps {
   isOwner?: boolean;
 }
 
-const CURRENCY_LABELS = ['CELO', 'G$'];
 const STATUS_LABELS = ['Active', 'Sold', 'Cancelled'];
 
 export default function ListingCard({ listing, onPurchase, onCancel, isOwner }: ListingCardProps) {
@@ -34,7 +33,6 @@ export default function ListingCard({ listing, onPurchase, onCancel, isOwner }: 
   };
 
   const isActive = listing.status === 0;
-  const currency = CURRENCY_LABELS[listing.currency] ?? 'CELO';
 
   return (
     <Card className="h-full flex flex-col hover:shadow-xl transition-all hover:-translate-y-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
@@ -53,7 +51,7 @@ export default function ListingCard({ listing, onPurchase, onCancel, isOwner }: 
         <p className="text-slate-700 dark:text-slate-300 text-sm mb-4 line-clamp-3">{listing.description}</p>
         <div className="flex items-center justify-between">
           <span className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-green-500 bg-clip-text text-transparent">
-            {formatCELO(listing.price)} {currency}
+            {formatCELO(listing.price)} CELO
           </span>
           <div className="flex items-center gap-1 text-xs text-slate-400">
             <Clock className="h-3 w-3" />
@@ -72,7 +70,7 @@ export default function ListingCard({ listing, onPurchase, onCancel, isOwner }: 
           <Button onClick={handlePurchase} disabled={isPurchasing}
             className="w-full bg-gradient-to-r from-yellow-500 to-green-500 hover:from-yellow-600 hover:to-green-600 text-white border-0">
             <ShoppingCart className="h-4 w-4 mr-2" />
-            {isPurchasing ? 'Purchasing...' : `Buy with ${currency}`}
+            {isPurchasing ? 'Purchasing...' : 'Buy with CELO'}
           </Button>
         )}
         {!isActive && (
