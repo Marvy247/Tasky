@@ -9,7 +9,7 @@ import { getPurchaseHistory, formatAddress } from '@/lib/celo';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Package, ExternalLink, Clock, ShoppingBag } from 'lucide-react';
+import { Package, ExternalLink, Clock, ShoppingBag, Info, CheckCircle2 } from 'lucide-react';
 
 export default function MyOrders() {
   const router = useRouter();
@@ -26,6 +26,14 @@ export default function MyOrders() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-500 to-green-500 bg-clip-text text-transparent mb-2">My Orders</h1>
           <p className="text-slate-500 dark:text-slate-400">Items you have purchased on the marketplace</p>
+        </div>
+
+        <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-lg mb-6">
+          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+          <p className="text-xs text-blue-700 dark:text-blue-300">
+            When you purchase an item, your payment is sent directly to the seller via smart contract.
+            Each order has a verifiable transaction on the Celo blockchain. Contact the seller to arrange delivery.
+          </p>
         </div>
 
         {orders.length === 0 ? (
@@ -54,15 +62,15 @@ export default function MyOrders() {
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <p className="text-slate-400 text-xs">Price</p>
+                      <p className="text-slate-400 text-xs">Price Paid</p>
                       <p className="font-medium">{order.price} {order.currency}</p>
                     </div>
                     <div>
-                      <p className="text-slate-400 text-xs">Seller</p>
+                      <p className="text-slate-400 text-xs">Paid To (Seller)</p>
                       <p className="font-mono text-xs">{formatAddress(order.seller)}</p>
                     </div>
                     <div>
-                      <p className="text-slate-400 text-xs">Date</p>
+                      <p className="text-slate-400 text-xs">Purchase Date</p>
                       <p className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {new Date(order.timestamp).toLocaleDateString()}
@@ -76,9 +84,19 @@ export default function MyOrders() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-1 text-yellow-600 hover:text-yellow-700"
                       >
-                        View <ExternalLink className="h-3 w-3" />
+                        View on Explorer <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-xs text-slate-400 bg-slate-50 dark:bg-slate-700/30 p-2 rounded">
+                    <CheckCircle2 className="h-3 w-3 text-green-500" />
+                    <span>
+                      {order.currency} payment confirmed on-chain. <a
+                        href={`https://explorer.celo.org/mainnet/tx/${order.txHash}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="underline text-yellow-600"
+                      >Verify on Celo Explorer</a>
+                    </span>
                   </div>
                 </CardContent>
               </Card>

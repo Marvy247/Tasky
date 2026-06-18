@@ -6,17 +6,18 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import TestnetBanner from '@/components/TestnetBanner';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Listing, CONTRACTS, MARKETPLACE_ABI, publicClient, formatCELO, formatAddress, getConnectedAddress, connectWallet, recordPurchase } from '@/lib/celo';
+import { Listing, CONTRACTS, MARKETPLACE_ABI, GD_ABI, publicClient, formatCELO, formatAddress, getConnectedAddress, connectWallet, recordPurchase, getPurchaseHistory } from '@/lib/celo';
 import { useTxTracker } from '@/lib/transactionTracker';
 import { createNotification, saveNotifications, loadNotifications, NOTIF_TYPES } from '@/lib/notifications';
 import { createWalletClient, custom, parseEther } from 'viem';
 import { celo } from 'viem/chains';
 import { toast } from 'sonner';
-import { ArrowLeft, ShoppingCart, User, Clock, ExternalLink, Package, Info, Edit3, Trash2, Save, X } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, User, Clock, ExternalLink, Package, Info, Edit3, Trash2, Save, X, Coins, CheckCircle2 } from 'lucide-react';
 
 async function getWalletClient() {
   const eth = (window as any).ethereum;
@@ -36,6 +37,8 @@ export default function ListingDetailPage() {
   const [editPrice, setEditPrice] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [paymentCurrency, setPaymentCurrency] = useState<'CELO' | 'G$'>('CELO');
   const { addTx } = useTxTracker();
 
   useEffect(() => {
@@ -83,30 +86,70 @@ export default function ListingDetailPage() {
     return addr;
   };
 
-  const handlePurchase = async () => {
+  const alreadyBought = listing
+    ? getPurchaseHistory().some(o => o.listingId === listing.listingId)
+    : false;
+
+  const handlePurchaseClick = async () => {
     const addr = await ensureConnected();
     if (!addr || !listing) return;
+    const defaultCur = listing.currency === 1 ? 'G$' : 'CELO';
+    setPaymentCurrency(defaultCur);
+    setShowConfirm(true);
+  };
+
+  const executePurchase = async () => {
+    const addr = await ensureConnected();
+    if (!addr || !listing) return;
+    setShowConfirm(false);
     setPurchasing(true);
     try {
       const wc = await getWalletClient();
-      const hash = await wc.writeContract({
-        address: CONTRACTS.CoreMarketPlace, abi: MARKETPLACE_ABI,
-        functionName: 'purchaseListing', args: [BigInt(listingId)],
-        value: listing.price, account: addr as `0x${string}`,
-      });
+      let hash: string;
+
+      if (paymentCurrency === 'CELO') {
+        hash = await wc.writeContract({
+          address: CONTRACTS.CoreMarketPlace, abi: MARKETPLACE_ABI,
+          functionName: 'purchaseListing', args: [BigInt(listingId)],
+          value: listing.price, account: addr as `0x${string}`,
+        });
+      } else {
+        const allowance = await publicClient.readContract({
+          address: CONTRACTS.GDollar, abi: GD_ABI,
+          functionName: 'allowance', args: [addr as `0x${string}`, CONTRACTS.CoreMarketPlace],
+        });
+        if (allowance < listing.price) {
+          const approveHash = await wc.writeContract({
+            address: CONTRACTS.GDollar, abi: GD_ABI,
+            functionName: 'approve', args: [CONTRACTS.CoreMarketPlace, listing.price],
+            account: addr as `0x${string}`,
+          });
+          addTx(approveHash, `Approve G$ for ${listing.name}`);
+          await publicClient.waitForTransactionReceipt({ hash: approveHash });
+        }
+        hash = await wc.writeContract({
+          address: CONTRACTS.CoreMarketPlace, abi: MARKETPLACE_ABI,
+          functionName: 'purchaseListingGD', args: [BigInt(listingId)],
+          account: addr as `0x${string}`,
+        });
+      }
+
       addTx(hash, `Purchase: ${listing.name}`);
       recordPurchase({
         listingId: listing.listingId,
         name: listing.name,
         description: listing.description,
         price: formatCELO(listing.price),
-        currency: listing.currency === 1 ? 'G$' : 'CELO',
+        currency: paymentCurrency,
         seller: listing.seller,
         txHash: hash,
         timestamp: Date.now(),
       });
+      const ns = loadNotifications();
+      ns.unshift(createNotification(NOTIF_TYPES.PURCHASE, `Purchased "${listing.name}" for ${formatCELO(listing.price)} ${paymentCurrency}`));
+      saveNotifications(ns);
       toast.success('Purchase submitted!', {
-        description: 'Track progress in the Transactions panel.',
+        description: `${formatCELO(listing.price)} ${paymentCurrency} paid to seller. Track in Transactions panel.`,
         action: { label: 'View Orders', onClick: () => window.location.href = '/my-orders' },
       });
       loadListing();
@@ -230,7 +273,7 @@ export default function ListingDetailPage() {
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mb-6">
               <div className="flex items-center gap-1.5">
                 <User className="h-4 w-4" />
-                <span>{formatAddress(listing.seller)}</span>
+                <span>Seller: {formatAddress(listing.seller)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4" />
@@ -269,12 +312,22 @@ export default function ListingDetailPage() {
             <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-900/30 rounded-lg mb-6">
               <Info className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0" />
               <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                Funds are sent directly to the seller via smart contract. No intermediaries, no fees.
+                Your payment is sent directly to the seller via smart contract. No intermediaries, no extra fees.
+                After purchase, you can track your order in <Link href="/my-orders" className="underline">My Orders</Link> and view the transaction on-chain.
               </p>
             </div>
 
-            {isActive && !isOwner && (
-              <Button onClick={handlePurchase} disabled={purchasing} size="lg"
+            {alreadyBought && (
+              <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900/30 rounded-lg mb-6">
+                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
+                <p className="text-xs text-green-700 dark:text-green-300">
+                  You purchased this item. View it in <Link href="/my-orders" className="underline">My Orders</Link>.
+                </p>
+              </div>
+            )}
+
+            {isActive && !isOwner && !alreadyBought && (
+              <Button onClick={handlePurchaseClick} disabled={purchasing} size="lg"
                 className="w-full bg-gradient-to-r from-yellow-500 to-green-500 hover:from-yellow-600 hover:to-green-600 text-white border-0 text-lg py-6">
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 {purchasing ? 'Processing...' : `Buy Now — ${formatCELO(listing.price)} ${currency}`}
@@ -347,6 +400,80 @@ export default function ListingDetailPage() {
           </div>
         </div>
       </main>
+
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={(open) => { if (!open) setShowConfirm(false); }}
+        title="Confirm Purchase"
+        description={
+          listing
+            ? `You are buying "${listing.name}" for ${formatCELO(listing.price)} ${paymentCurrency}.`
+            : ''
+        }
+        onConfirm={executePurchase}
+        confirmText={`Pay ${listing ? formatCELO(listing.price) : ''} ${paymentCurrency}`}
+      >
+        {listing && (
+          <div className="mt-4 space-y-4">
+            <div className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3 text-xs text-slate-600 dark:text-slate-400 space-y-2">
+              <div className="flex justify-between">
+                <span>Item</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200">{listing.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Price</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200">{formatCELO(listing.price)} {paymentCurrency}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Seller</span>
+                <span className="font-mono text-xs">{formatAddress(listing.seller)}</span>
+              </div>
+              <hr className="border-slate-200 dark:border-slate-600" />
+              <p className="text-slate-500 dark:text-slate-400">
+                <Info className="h-3 w-3 inline mr-1" />
+                Funds sent directly to seller. Transfer is recorded on-chain.
+              </p>
+              <p className="text-slate-500 dark:text-slate-400">
+                <ShoppingCart className="h-3 w-3 inline mr-1" />
+                Order tracked in <Link href="/my-orders" className="underline text-yellow-600">My Orders</Link>.
+              </p>
+            </div>
+
+            {listing.currency === 1 && (
+              <div>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Pay with</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentCurrency('CELO')}
+                    className={`flex items-center justify-center gap-1.5 flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-all cursor-pointer ${
+                      paymentCurrency === 'CELO'
+                        ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 shadow-sm'
+                        : 'border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500'
+                    }`}
+                  >
+                    <Coins className={`h-4 w-4 ${paymentCurrency === 'CELO' ? 'text-yellow-500' : ''}`} />
+                    CELO
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentCurrency('G$')}
+                    className={`flex items-center justify-center gap-1.5 flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-all cursor-pointer ${
+                      paymentCurrency === 'G$'
+                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 shadow-sm'
+                        : 'border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500'
+                    }`}
+                  >
+                    <Coins className={`h-4 w-4 ${paymentCurrency === 'G$' ? 'text-green-500' : ''}`} />
+                    G$
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </ConfirmDialog>
+
       <Footer />
     </div>
   );
