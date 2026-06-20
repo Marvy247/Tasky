@@ -10,7 +10,7 @@ export const publicClient = createPublicClient({
 });
 
 export const CONTRACTS = {
-  BountyBoard: '0xffFDf9B461Ef15a9a355FE2433368e043bdeb0C2' as `0x${string}`,
+  BountyBoard: '0xFD955eA61C556D6dA2F7542f5bC618345b0EaddA' as `0x${string}`,
   GDollar: '0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A' as `0x${string}`,
 };
 

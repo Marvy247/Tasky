@@ -29,7 +29,7 @@ G$ is a first-class reward currency alongside CELO. Posters fund bounties in G$,
 
 | Contract | Address |
 |---|---|
-| BountyBoard | `0xffFDf9B461Ef15a9a355FE2433368e043bdeb0C2` |
+| BountyBoard | `0xFD955eA61C556D6dA2F7542f5bC618345b0EaddA` |
 | G$ Token | `0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A` |
 
 ## Tech Stack
@@ -40,7 +40,7 @@ Solidity 0.8.24 + OpenZeppelin, Celo mainnet, Next.js + viem, G$ (GoodDollar).
 
 ### Progress
 
-- BountyBoard contract written, compiled, and ready for deployment
+- BountyBoard deployed and verified on Celo mainnet
 - Frontend built with Vite + React + Tailwind v4 + Framer Motion
 - All pages functional: browse, post, detail (claim/proof/approve/cancel), my bounties
 - Wallet connect (MetaMask/Celo), Celo mainnet switching
@@ -54,16 +54,16 @@ Solidity 0.8.24 + OpenZeppelin, Celo mainnet, Next.js + viem, G$ (GoodDollar).
 - ✅ Frontend with all 4 pages + wallet + G$ approval
 - ✅ Platform fee (2.5%) + referral bonus (0.5%) embedded in contract
 - ✅ Clean, premium UI with glassmorphism, animations, responsive
+- ✅ Deployed to Celo mainnet (`0xFD955eA61C556D6dA2F7542f5bC618345b0EaddA`)
+- ✅ 8 seed bounties with 0.85 CELO total reward pool
 
 ### What's Next
 
-- Deploy to Celo mainnet and verify on explorer
-- Seed initial bounties with real rewards
-- Public frontend deployment (Vercel)
+- Public frontend deployment
 - Mobile optimization
 - Community launch on Celo Signal / GoodDollar channels
 
 ## Links
 
 - GitHub: https://github.com/Marvy247/Tasky
-- Explorer: https://explorer.celo.org/mainnet/address/0xffFDf9B461Ef15a9a355FE2433368e043bdeb0C2
+- Explorer: https://explorer.celo.org/mainnet/address/0xFD955eA61C556D6dA2F7542f5bC618345b0EaddA
