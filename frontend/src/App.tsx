@@ -1,5 +1,7 @@
+import { useState, useRef, useEffect } from 'react';
 import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { Toaster } from 'react-hot-toast';
 import { WalletProvider, useWallet } from './context/WalletContext';
 import Home from './pages/Home';
@@ -9,7 +11,17 @@ import MyBounties from './pages/MyBounties';
 
 function Navigation() {
   const location = useLocation();
-  const { address, connect, celoBalance, gdBalance } = useWallet();
+  const { address, connect, disconnect, celoBalance, gdBalance } = useWallet();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const links = [
     { to: '/', label: 'Browse', icon: '🔍' },
@@ -37,24 +49,55 @@ function Navigation() {
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3" ref={ref}>
             {address ? (
-              <>
-                <div className="hidden sm:flex items-center gap-3 text-xs">
-                  <span className="text-text-dim">
-                    <span className="font-mono font-medium text-accent-indigo">{celoBalance}</span> CELO
-                  </span>
-                  <span className="text-text-dim">
-                    <span className="font-mono font-medium text-accent-emerald">{gdBalance}</span> G$
-                  </span>
-                </div>
-                <span className="text-xs font-mono text-text-pale bg-app-hover px-3 py-1.5 rounded-full">
+              <div className="relative">
+                <button onClick={() => setOpen(!open)}
+                  className="flex items-center gap-2 bg-app-hover hover:bg-app-border transition-colors px-4 py-2 rounded-full text-sm font-mono text-text-main">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
                   {address.slice(0, 6)}...{address.slice(-4)}
-                </span>
-              </>
+                  <motion.span animate={{ rotate: open ? 180 : 0 }} className="text-xs text-text-pale">▼</motion.span>
+                </button>
+                <AnimatePresence>
+                  {open && (
+                    <motion.div initial={{ opacity: 0, y: -8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.96 }} transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl border border-app-border shadow-floating p-4 space-y-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-text-pale font-medium mb-1.5">Connected Wallet</p>
+                        <div className="flex items-center justify-between bg-app-hover rounded-xl px-3 py-2.5">
+                          <span className="font-mono text-sm text-text-main">{address.slice(0, 6)}...{address.slice(-4)}</span>
+                          <button onClick={() => { navigator.clipboard.writeText(address); toast.success('Address copied'); }}
+                            className="text-xs text-accent-indigo hover:text-accent-indigo-hover font-medium transition-colors">
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-app-hover rounded-xl p-3">
+                          <p className="text-[10px] text-text-pale font-medium">CELO</p>
+                          <p className="font-bold text-sm text-accent-indigo mt-0.5">{celoBalance}</p>
+                        </div>
+                        <div className="bg-app-hover rounded-xl p-3">
+                          <p className="text-[10px] text-text-pale font-medium">G$</p>
+                          <p className="font-bold text-sm text-accent-emerald mt-0.5">{gdBalance}</p>
+                        </div>
+                      </div>
+                      <Link to="/my-bounties" onClick={() => setOpen(false)}
+                        className="flex items-center gap-2 text-sm text-text-dim hover:text-text-main transition-colors py-2 px-1">
+                        📋 My Bounties
+                      </Link>
+                      <button onClick={() => { disconnect(); setOpen(false); }}
+                        className="w-full text-sm text-red-500 hover:text-red-600 font-medium py-2.5 rounded-xl hover:bg-red-50 transition-colors">
+                        Disconnect
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             ) : (
               <button onClick={connect} className="btn-primary text-sm !px-5 !py-2.5">
-                Connect
+                Connect Wallet
               </button>
             )}
           </div>
