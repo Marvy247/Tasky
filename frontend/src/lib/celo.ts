@@ -84,6 +84,10 @@ export const BOUNTYBOARD_ABI = [
     name: 'platformFeeBps', type: 'function', stateMutability: 'view',
     inputs: [], outputs: [{ type: 'uint256' }],
   },
+  {
+    name: 'accumulatedFees', type: 'function', stateMutability: 'view',
+    inputs: [], outputs: [{ type: 'uint256' }],
+  },
 ] as const;
 
 export const GD_ABI = [
@@ -233,4 +237,71 @@ export async function getAllBounties(): Promise<Bounty[]> {
     const results = await Promise.allSettled(ids.map(id => getBounty(Number(id))));
     return results.filter(r => r.status === 'fulfilled' && r.value).map(r => (r as any).value);
   } catch { return []; }
+}
+
+export interface ActivityItem {
+  type: 'posted' | 'claimed' | 'completed' | 'cancelled';
+  bountyId: number;
+  address: string;
+  title: string;
+  reward: bigint;
+  currency: number;
+  timestamp: number;
+}
+
+export async function getRecentActivity(limit = 20): Promise<ActivityItem[]> {
+  try {
+    const count = Number(await publicClient.readContract({
+      address: CONTRACTS.BountyBoard, abi: BOUNTYBOARD_ABI,
+      functionName: 'bountyCount',
+    }));
+    const start = Math.max(1, count - limit + 1);
+    const items: ActivityItem[] = [];
+    for (let i = count; i >= start; i--) {
+      const b = await getBounty(i);
+      if (!b) continue;
+      let type: ActivityItem['type'] = 'posted';
+      if (b.status === 1) type = 'claimed';
+      else if (b.status === 2) type = 'completed';
+      else if (b.status === 3) type = 'cancelled';
+      items.push({ type, bountyId: i, address: type === 'posted' || type === 'cancelled' ? b.poster : b.worker, title: b.title, reward: b.reward, currency: b.currency, timestamp: Number(b.createdAt) * 5 });
+    }
+    return items.slice(0, limit);
+  } catch { return []; }
+}
+
+export async function getStats() {
+  try {
+    const count = await publicClient.readContract({
+      address: CONTRACTS.BountyBoard, abi: BOUNTYBOARD_ABI,
+      functionName: 'bountyCount',
+    }) as bigint;
+    const fees = await publicClient.readContract({
+      address: CONTRACTS.BountyBoard, abi: BOUNTYBOARD_ABI,
+      functionName: 'accumulatedFees',
+    }) as bigint;
+    return { totalBounties: Number(count), accumulatedFees: fees };
+  } catch { return { totalBounties: 0, accumulatedFees: 0n }; }
+}
+
+let blockRef: { number: bigint; timestamp: bigint } | null = null;
+let blockRefTime = 0;
+
+async function ensureBlockRef(): Promise<{ number: bigint; timestamp: bigint }> {
+  if (!blockRef || Date.now() - blockRefTime > 10000) {
+    const b = await publicClient.getBlock({ blockTag: 'latest' });
+    blockRef = { number: b.number!, timestamp: b.timestamp };
+    blockRefTime = Date.now();
+  }
+  return blockRef;
+}
+
+export async function blockToEta(deadlineBlock: bigint): Promise<number> {
+  const ref = await ensureBlockRef();
+  const diff = Number(deadlineBlock - ref.number);
+  return Number(ref.timestamp) + diff * 5;
+}
+
+export async function getAllActivity(limit = 30): Promise<ActivityItem[]> {
+  return getRecentActivity(limit);
 }

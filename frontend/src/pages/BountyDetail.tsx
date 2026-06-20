@@ -4,8 +4,10 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { createWalletClient, custom } from 'viem';
 import { celo } from 'viem/chains';
-import { getBounty, type Bounty, CONTRACTS, BOUNTYBOARD_ABI, publicClient, formatCELO, formatAddress, connectWallet, blockToDate, formatBlockDate } from '../lib/celo';
+import { getBounty, blockToEta, type Bounty, CONTRACTS, BOUNTYBOARD_ABI, publicClient, formatCELO, formatAddress, connectWallet } from '../lib/celo';
 import { useWallet } from '../context/WalletContext';
+import Countdown from '../components/Countdown';
+import Confetti from '../components/Confetti';
 
 async function getWalletClient() {
   const eth = (window as any).ethereum;
@@ -21,21 +23,18 @@ export default function BountyDetail() {
   const navigate = useNavigate();
   const { address, refresh } = useWallet();
   const [bounty, setBounty] = useState<Bounty | null>(null);
-  const [deadlineDate, setDeadlineDate] = useState('');
-  const [createdDate, setCreatedDate] = useState('');
+  const [deadlineTs, setDeadlineTs] = useState(0);
   const [loading, setLoading] = useState(true);
   const [proof, setProof] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const load = async () => {
     if (!id) return;
     setLoading(true);
     const b = await getBounty(parseInt(id));
     setBounty(b);
-    if (b) {
-      setDeadlineDate(formatBlockDate(await blockToDate(b.deadline)));
-      setCreatedDate(formatBlockDate(await blockToDate(b.createdAt)));
-    }
+    if (b) setDeadlineTs(await blockToEta(b.deadline));
     setLoading(false);
   };
 
@@ -103,6 +102,8 @@ export default function BountyDetail() {
       toast.loading('Approving submission...', { id: 'action' });
       await publicClient.waitForTransactionReceipt({ hash });
       toast.success('Payment released! 🎉', { id: 'action' });
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 4000);
       refresh();
       load();
     } catch (e: any) {
@@ -128,6 +129,13 @@ export default function BountyDetail() {
     } catch (e: any) {
       toast.error(e.shortMessage || 'Cancel failed', { id: 'action' });
     } finally { setActionLoading(false); }
+  };
+
+  const handleShare = () => {
+    const ref = address || '';
+    const url = `${window.location.origin}/bounty/${id}${ref ? `?ref=${ref}` : ''}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Link copied! Share it with a friend.');
   };
 
   if (loading) return (
@@ -166,6 +174,7 @@ export default function BountyDetail() {
 
   return (
     <div className="pt-40 pb-24 px-6">
+      <Confetti active={showConfetti} />
       <div className="max-w-3xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <button onClick={() => navigate(-1)} className="btn-ghost mb-6">← Back</button>
@@ -197,11 +206,11 @@ export default function BountyDetail() {
               </div>
               <div>
                 <p className="text-text-pale text-xs">Deadline</p>
-                <p className="mt-0.5">{deadlineDate}</p>
+                <p className="mt-0.5">{deadlineTs > 0 ? <Countdown targetTimestamp={deadlineTs} /> : '...'}</p>
               </div>
               <div>
-                <p className="text-text-pale text-xs">Created</p>
-                <p className="mt-0.5">{createdDate}</p>
+                <p className="text-text-pale text-xs">Bounty</p>
+                <p className="mt-0.5">#{bounty.id}</p>
               </div>
             </div>
 
@@ -267,11 +276,19 @@ export default function BountyDetail() {
                 <p className="text-emerald-700 font-medium">✅ Bounty completed! Payment released to worker.</p>
               </div>
             )}
+
             {bounty.status === 3 && (
               <div className="mt-6 p-4 bg-slate-100 rounded-xl text-center">
                 <p className="text-slate-500 font-medium">Bounty cancelled. Funds returned to poster.</p>
               </div>
             )}
+
+            <div className="mt-6 flex items-center justify-between text-sm text-text-dim border-t border-app-border pt-6">
+              <button onClick={handleShare} className="flex items-center gap-2 hover:text-accent-indigo transition-colors">
+                <span>🔗</span> Share with Referral Link
+              </button>
+              <span className="text-xs text-text-pale">2.5% platform fee · 0.5% referral bonus</span>
+            </div>
           </div>
         </motion.div>
       </div>

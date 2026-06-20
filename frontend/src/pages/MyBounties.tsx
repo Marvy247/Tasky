@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { publicClient, CONTRACTS, BOUNTYBOARD_ABI, type Bounty, formatCELO } from '../lib/celo';
+import { publicClient, CONTRACTS, BOUNTYBOARD_ABI, blockToEta, type Bounty, formatCELO } from '../lib/celo';
 import { useWallet } from '../context/WalletContext';
+import Countdown from '../components/Countdown';
 
 const statusLabels = ['Open', 'Claimed', 'Completed', 'Cancelled'];
 const statusColors = ['bg-emerald-500', 'bg-amber-500', 'bg-blue-500', 'bg-slate-400'];
 
 export default function MyBounties() {
   const { address, connect } = useWallet();
-  const [myIds, setMyIds] = useState<number[]>([]);
   const [bounties, setBounties] = useState<Bounty[]>([]);
+  const [deadlines, setDeadlines] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'all' | 'posted' | 'claimed'>('all');
 
@@ -24,7 +25,6 @@ export default function MyBounties() {
         args: [address as `0x${string}`],
       }) as bigint[];
       const nums = ids.map(i => Number(i));
-      setMyIds(nums);
       const results = await Promise.allSettled(
         nums.map(id => publicClient.readContract({
           address: CONTRACTS.BountyBoard, abi: BOUNTYBOARD_ABI,
@@ -41,6 +41,9 @@ export default function MyBounties() {
         }
       });
       setBounties(bs);
+      const dm: Record<number, number> = {};
+      for (const b of bs) dm[b.id] = await blockToEta(b.deadline);
+      setDeadlines(dm);
       setLoading(false);
     };
     load();
@@ -61,6 +64,11 @@ export default function MyBounties() {
     </div>
   );
 
+  const needsAction = bounties.filter(b =>
+    (b.poster.toLowerCase() === address?.toLowerCase() && b.status === 1) ||
+    (b.worker.toLowerCase() === address?.toLowerCase() && b.status === 0)
+  ).length;
+
   return (
     <div className="pt-40 pb-24 px-6">
       <div className="max-w-5xl mx-auto">
@@ -69,7 +77,9 @@ export default function MyBounties() {
             My <span className="italic text-accent-indigo">Bounties</span>
           </h1>
           <p className="text-text-dim mb-8">
-            Bounties you've posted or claimed. {myIds.length > 0 && `${myIds.length} total`}
+            Bounties you've posted or claimed. {needsAction > 0 && (
+              <span className="text-amber-600 font-medium">{needsAction} need your attention</span>
+            )}
           </p>
 
           <div className="flex gap-2 mb-8">
@@ -89,14 +99,16 @@ export default function MyBounties() {
             <div className="text-center py-16">
               <p className="text-4xl mb-4">📭</p>
               <p className="text-text-dim">No bounties found</p>
+              <Link to="/post" className="btn-primary mt-4 inline-block">Post your first bounty</Link>
             </div>
           ) : (
             <div className="space-y-4">
               {filtered.map((b, i) => {
                 const isPoster = b.poster.toLowerCase() === address?.toLowerCase();
+                const needAction = (isPoster && b.status === 1) || (!isPoster && b.status === 0);
                 return (
                   <motion.div key={b.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                    <Link to={`/bounty/${b.id}`} className="block card-premium group">
+                    <Link to={`/bounty/${b.id}`} className={`block card-premium group relative ${needAction ? 'ring-2 ring-amber-300' : ''}`}>
                       <div className="flex items-center justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-1">
@@ -108,13 +120,17 @@ export default function MyBounties() {
                             ) : (
                               <span className="text-[10px] font-medium text-accent-emerald bg-accent-emerald/5 px-2 py-0.5 rounded-full">Worker</span>
                             )}
+                            {needAction && (
+                              <span className="text-[10px] font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">Action needed</span>
+                            )}
                           </div>
                           <h3 className="font-semibold text-text-main group-hover:text-accent-indigo transition-colors">{b.title}</h3>
                           <p className="text-xs text-text-dim mt-0.5 line-clamp-1">{b.description}</p>
                         </div>
-                        <div className="text-right ml-4 shrink-0">
+                        <div className="text-right ml-4 shrink-0 space-y-1">
                           <p className="font-bold text-accent-indigo">{formatCELO(b.reward)} {b.currency === 0 ? 'CELO' : 'G$'}</p>
                           <p className="text-xs text-text-pale">#{b.id}</p>
+                          {deadlines[b.id] && <Countdown targetTimestamp={deadlines[b.id]} />}
                         </div>
                       </div>
                     </Link>
