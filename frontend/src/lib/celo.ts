@@ -255,6 +255,7 @@ export async function getRecentActivity(limit = 20): Promise<ActivityItem[]> {
       address: CONTRACTS.BountyBoard, abi: BOUNTYBOARD_ABI,
       functionName: 'bountyCount',
     }));
+    const ref = await ensureBlockRef();
     const start = Math.max(1, count - limit + 1);
     const items: ActivityItem[] = [];
     for (let i = count; i >= start; i--) {
@@ -264,10 +265,22 @@ export async function getRecentActivity(limit = 20): Promise<ActivityItem[]> {
       if (b.status === 1) type = 'claimed';
       else if (b.status === 2) type = 'completed';
       else if (b.status === 3) type = 'cancelled';
-      items.push({ type, bountyId: i, address: type === 'posted' || type === 'cancelled' ? b.poster : b.worker, title: b.title, reward: b.reward, currency: b.currency, timestamp: Number(b.createdAt) * 5 });
+      const diff = Number(b.createdAt - ref.number);
+      const ts = Number(ref.timestamp) + diff * 5;
+      items.push({ type, bountyId: i, address: type === 'posted' || type === 'cancelled' ? b.poster : b.worker, title: b.title, reward: b.reward, currency: b.currency, timestamp: ts });
     }
     return items.slice(0, limit);
   } catch { return []; }
+}
+
+export function timeAgo(ts: number): string {
+  const now = Math.floor(Date.now() / 1000);
+  const diff = now - ts;
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return new Date(ts * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 export async function getStats() {

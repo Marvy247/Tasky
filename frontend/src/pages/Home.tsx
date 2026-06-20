@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getAllBounties, getRecentActivity, getStats, blockToEta, type Bounty, type ActivityItem, formatCELO } from '../lib/celo';
+import { getAllBounties, getRecentActivity, getStats, blockToEta, timeAgo, type Bounty, type ActivityItem, formatCELO } from '../lib/celo';
 import { useWallet } from '../context/WalletContext';
 import Countdown from '../components/Countdown';
 
@@ -54,7 +54,24 @@ export default function Home() {
       return Number(b.id - a.id);
     });
 
+  const activityColors: Record<string, string> = {
+    posted: 'border-l-emerald-400 bg-emerald-50/50',
+    claimed: 'border-l-amber-400 bg-amber-50/50',
+    completed: 'border-l-blue-400 bg-blue-50/50',
+    cancelled: 'border-l-slate-400 bg-slate-50/50',
+  };
   const activityIcons: Record<string, string> = { posted: '📢', claimed: '👋', completed: '✅', cancelled: '🗑️' };
+  const activityVerbs: Record<string, string> = { posted: 'Posted', claimed: 'Claimed', completed: 'Completed', cancelled: 'Cancelled' };
+
+  const grouped = activity.reduce<Record<string, ActivityItem[]>>((acc, a) => {
+    const day = new Date(a.timestamp * 1000).toDateString();
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const label = day === today ? 'Today' : day === yesterday ? 'Yesterday' : new Date(a.timestamp * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    if (!acc[label]) acc[label] = [];
+    acc[label].push(a);
+    return acc;
+  }, {});
 
   return (
     <div className="pt-32 pb-24 px-6">
@@ -177,25 +194,37 @@ export default function Home() {
 
         {activity.length > 0 && (
           <div className="mt-16">
-            <h3 className="text-xl font-serif font-bold text-text-main mb-6">Recent Activity</h3>
-            <div className="card-premium !p-4 divide-y divide-app-border">
-              {activity.map((a, i) => (
-                <Link key={i} to={`/bounty/${a.bountyId}`} className="flex items-center gap-3 py-3 text-sm hover:bg-app-hover -mx-4 px-4 transition-colors">
-                  <span className="text-base shrink-0">{activityIcons[a.type]}</span>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
-                    a.type === 'posted' ? 'bg-emerald-100 text-emerald-700' :
-                    a.type === 'claimed' ? 'bg-amber-100 text-amber-700' :
-                    a.type === 'completed' ? 'bg-blue-100 text-blue-700' :
-                    'bg-slate-100 text-slate-600'
-                  }`}>
-                    {a.type}
-                  </span>
-                  <span className="text-text-dim truncate flex-1">
-                    <span className="text-text-main font-medium">{a.title}</span>
-                    <span className="text-text-pale"> — {formatCELO(a.reward)} {a.currency === 0 ? 'CELO' : 'G$'}</span>
-                  </span>
-                  <span className="text-text-pale text-xs shrink-0 font-mono">{a.address?.slice(0, 6)}…</span>
-                </Link>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-serif font-bold text-text-main">Activity</h3>
+              <span className="text-xs text-text-pale font-mono">{activity.length} events</span>
+            </div>
+            <div className="space-y-6">
+              {Object.entries(grouped).map(([label, items]) => (
+                <div key={label}>
+                  <p className="text-[11px] uppercase tracking-widest text-text-pale font-medium mb-3 px-1">{label}</p>
+                  <div className="space-y-1.5">
+                    {items.map((a, i) => (
+                      <Link key={`${label}-${i}`} to={`/bounty/${a.bountyId}`}
+                        className={`flex items-start gap-3.5 p-3.5 rounded-xl border-l-4 transition-all hover:shadow-sm group ${activityColors[a.type]}`}>
+                        <span className="text-base mt-0.5 shrink-0">{activityIcons[a.type]}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-text-main leading-snug">
+                            <span className="font-medium">{activityVerbs[a.type]}</span>
+                            <span className="text-text-pale"> on </span>
+                            <span className="font-medium group-hover:text-accent-indigo transition-colors">{a.title}</span>
+                          </p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-xs text-text-pale font-mono">{timeAgo(a.timestamp)}</span>
+                            <span className="text-xs text-text-pale">·</span>
+                            <span className="text-xs font-medium text-accent-indigo">{formatCELO(a.reward)} {a.currency === 0 ? 'CELO' : 'G$'}</span>
+                            <span className="text-xs text-text-pale">·</span>
+                            <span className="text-xs text-text-pale font-mono">{a.address?.slice(0, 6)}…</span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
