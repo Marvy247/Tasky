@@ -7,7 +7,7 @@ const TEMP_DIR = join(__dirname, '../temp-commits');
 const NUM_PRS = 5;
 const TOTAL_COMMITS = 50;
 const COMMITS_PER_PR = Math.ceil(TOTAL_COMMITS / NUM_PRS); // 10 each
-const OFFSET = 40500;
+const OFFSET = 40600;
 
 function run(cmd) {
   try { execSync(cmd, { stdio: 'inherit' }); } catch (e) { console.error(`Error: ${e.message}`); process.exit(1); }
@@ -24,7 +24,7 @@ writeFileSync(join(TEMP_DIR, '.gitkeep'), '');
 tryRun('git add temp-commits/ && git commit -m "chore: init temp-commits dir"');
 
 for (let pr = 1; pr <= NUM_PRS; pr++) {
-  const branch = `activity-pr-b6-${pr}`;
+  const branch = `activity-pr-b7-${pr}`;
   run(`git checkout -b ${branch}`);
 
   const start = (pr - 1) * COMMITS_PER_PR + 1;
