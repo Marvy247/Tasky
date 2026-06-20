@@ -90,7 +90,7 @@ export default function MyBounties() {
             {(['all', 'posted', 'claimed'] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}
                 className={`px-5 py-2 rounded-full text-sm font-medium capitalize transition-all ${
-                  tab === t ? 'bg-accent-indigo text-white' : 'bg-white border border-app-border text-text-dim'
+                   tab === t ? 'bg-accent-indigo text-white' : 'bg-white dark:bg-app-surface border border-app-border text-text-dim'
                 }`}>
                 {t} ({bounties.filter(b => t === 'all' ? true : t === 'posted' ? b.poster.toLowerCase() === address?.toLowerCase() : b.worker.toLowerCase() === address?.toLowerCase()).length})
               </button>

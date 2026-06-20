@@ -40,21 +40,16 @@
   --animate-soft-pulse: softPulse 3s ease-in-out infinite;
 }
 
-@variant dark {
-  @theme {
-    --color-app-bg: #0D0F14;
-    --color-app-surface: #16181F;
-    --color-app-card: #1A1D25;
-    --color-app-border: #272A32;
-    --color-app-hover: #1E2128;
-    --color-text-main: #E8E9ED;
-    --color-text-dim: #9295A0;
-    --color-text-pale: #636673;
-    --shadow-premium: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
-    --shadow-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.15);
-    --shadow-glow-indigo: 0 0 20px rgba(79, 70, 229, 0.05);
-    --shadow-glow-emerald: 0 0 20px rgba(5, 150, 105, 0.05);
-  }
+/* Dark mode theme overrides */
+.dark {
+  --color-app-bg: #0D0F14;
+  --color-app-surface: #16181F;
+  --color-app-card: #1A1D25;
+  --color-app-border: #272A32;
+  --color-app-hover: #1E2128;
+  --color-text-main: #E8E9ED;
+  --color-text-dim: #9295A0;
+  --color-text-pale: #636673;
 }
 
 @keyframes reveal {

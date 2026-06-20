@@ -141,7 +141,7 @@ export default function Home() {
               {(['all', 'CELO', 'G$'] as const).map(f => (
                 <button key={f} onClick={() => setFilter(f)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                    filter === f ? 'bg-accent-indigo text-white' : 'bg-white border border-app-border text-text-dim hover:border-accent-indigo/30'
+                    filter === f ? 'bg-accent-indigo text-white' : 'bg-white dark:bg-app-surface border border-app-border text-text-dim hover:border-accent-indigo/30'
                   }`}>
                   {f === 'all' ? 'All' : f}
                 </button>
