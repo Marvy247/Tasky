@@ -31,6 +31,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (addr) { setAddress(addr); refreshBalances(addr); }
   }, []);
 
+  useEffect(() => {
+    if (!address) return;
+    refreshBalances(address);
+    const id = setInterval(() => refreshBalances(address), 15000);
+    return () => clearInterval(id);
+  }, [address]);
+
   const connect = async () => {
     const addr = await doConnect();
     if (addr) { setAddress(addr); await refreshBalances(addr); }

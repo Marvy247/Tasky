@@ -8,6 +8,8 @@ import { getBounty, blockToEta, type Bounty, CONTRACTS, BOUNTYBOARD_ABI, publicC
 import { useWallet } from '../context/WalletContext';
 import Countdown from '../components/Countdown';
 import Confetti from '../components/Confetti';
+import TransactionModal from '../components/TransactionModal';
+import type { Step } from '../components/TransactionModal';
 
 async function getWalletClient() {
   const eth = (window as any).ethereum;
@@ -28,6 +30,9 @@ export default function BountyDetail() {
   const [proof, setProof] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalSteps, setModalSteps] = useState<Step[]>([]);
 
   const load = async () => {
     if (!id) return;
@@ -47,88 +52,83 @@ export default function BountyDetail() {
     return null;
   };
 
-  const handleClaim = async () => {
+  const runAction = async (label: string, action: () => Promise<void>, onSuccess?: () => void) => {
     const addr = await ensureConnected();
     if (!addr || !bounty) return;
     setActionLoading(true);
+    const steps: Step[] = [{ label, status: 'active' }, { label: 'Confirmed', status: 'pending' }];
+    setModalTitle(label);
+    setModalSteps(steps);
+    setModalOpen(true);
     try {
+      await action();
+      setModalSteps(prev => prev.map(s => s.status === 'active' ? { ...s, status: 'done' } : s));
+      setModalSteps(prev => prev.map(s => s.status === 'pending' ? { ...s, status: 'done' } : s));
+      if (onSuccess) onSuccess();
+    } catch (e: any) {
+      setModalSteps(prev => prev.map(s => s.status === 'active' ? { ...s, status: 'error' } : s));
+      toast.error(e.shortMessage || `${label} failed`);
+    } finally { setActionLoading(false); }
+  };
+
+  const handleClaim = async () => {
+    if (!bounty) return;
+    await runAction('Claiming Bounty', async () => {
       const wc = await getWalletClient();
       const hash = await wc.writeContract({
         address: CONTRACTS.BountyBoard, abi: BOUNTYBOARD_ABI,
         functionName: 'claimBounty', args: [BigInt(bounty.id)],
-        account: addr as `0x${string}`,
+        account: address as `0x${string}`,
       });
-      toast.loading('Claiming bounty...', { id: 'action' });
       await publicClient.waitForTransactionReceipt({ hash });
-      toast.success('Bounty claimed! Complete the work and submit proof.', { id: 'action' });
       refresh();
       load();
-    } catch (e: any) {
-      toast.error(e.shortMessage || 'Claim failed', { id: 'action' });
-    } finally { setActionLoading(false); }
+    });
   };
 
   const handleSubmitProof = async () => {
-    const addr = await ensureConnected();
-    if (!addr || !bounty || !proof.trim()) return;
-    setActionLoading(true);
-    try {
+    if (!bounty || !proof.trim()) return;
+    await runAction('Submitting Proof', async () => {
       const wc = await getWalletClient();
       const hash = await wc.writeContract({
         address: CONTRACTS.BountyBoard, abi: BOUNTYBOARD_ABI,
         functionName: 'submitProof', args: [BigInt(bounty.id), proof.trim()],
-        account: addr as `0x${string}`,
+        account: address as `0x${string}`,
       });
-      toast.loading('Submitting proof...', { id: 'action' });
       await publicClient.waitForTransactionReceipt({ hash });
-      toast.success('Proof submitted! Waiting for poster to approve.', { id: 'action' });
       load();
-    } catch (e: any) {
-      toast.error(e.shortMessage || 'Submit failed', { id: 'action' });
-    } finally { setActionLoading(false); }
+    });
   };
 
   const handleApprove = async () => {
-    const addr = await ensureConnected();
-    if (!addr || !bounty) return;
-    setActionLoading(true);
-    try {
+    if (!bounty) return;
+    await runAction('Approving & Releasing', async () => {
       const wc = await getWalletClient();
       const hash = await wc.writeContract({
         address: CONTRACTS.BountyBoard, abi: BOUNTYBOARD_ABI,
         functionName: 'approveSubmission', args: [BigInt(bounty.id)],
-        account: addr as `0x${string}`,
+        account: address as `0x${string}`,
       });
-      toast.loading('Approving submission...', { id: 'action' });
       await publicClient.waitForTransactionReceipt({ hash });
-      toast.success('Payment released! 🎉', { id: 'action' });
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 4000);
       refresh();
       load();
-    } catch (e: any) {
-      toast.error(e.shortMessage || 'Approve failed', { id: 'action' });
-    } finally { setActionLoading(false); }
+    });
   };
 
   const handleCancel = async () => {
-    const addr = await ensureConnected();
-    if (!addr || !bounty) return;
-    setActionLoading(true);
-    try {
+    if (!bounty) return;
+    await runAction('Cancelling Bounty', async () => {
       const wc = await getWalletClient();
       const hash = await wc.writeContract({
         address: CONTRACTS.BountyBoard, abi: BOUNTYBOARD_ABI,
         functionName: 'cancelBounty', args: [BigInt(bounty.id)],
-        account: addr as `0x${string}`,
+        account: address as `0x${string}`,
       });
-      toast.loading('Cancelling...', { id: 'action' });
       await publicClient.waitForTransactionReceipt({ hash });
-      toast.success('Bounty cancelled.', { id: 'action' });
       load();
-    } catch (e: any) {
-      toast.error(e.shortMessage || 'Cancel failed', { id: 'action' });
-    } finally { setActionLoading(false); }
+    });
   };
 
   const handleShare = () => {
@@ -150,7 +150,10 @@ export default function BountyDetail() {
 
   if (!bounty) return (
     <div className="pt-40 pb-24 px-6 text-center">
-      <p className="text-5xl mb-4">🤷</p>
+      <svg className="w-16 h-16 mx-auto mb-6 text-text-pale" fill="none" viewBox="0 0 64 64" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="32" cy="32" r="28" strokeDasharray="4 3" />
+        <path d="M32 20v14l8 4" strokeLinecap="round" />
+      </svg>
       <h2 className="text-2xl font-bold mb-2">Bounty not found</h2>
       <button onClick={() => navigate('/')} className="btn-primary mt-4">Back to Home</button>
     </div>
@@ -167,7 +170,7 @@ export default function BountyDetail() {
 
   const ActionButton = ({ onClick, label, color }: { onClick: () => void; label: string; color: string }) => (
     <button onClick={onClick} disabled={actionLoading}
-      className={`w-full py-4 rounded-xl font-semibold text-lg text-white transition-all disabled:opacity-50 ${color}`}>
+      className={`w-full py-4 rounded-xl font-semibold text-lg text-white transition-all disabled:opacity-50 cursor-pointer ${color}`}>
       {actionLoading ? 'Processing...' : label}
     </button>
   );
@@ -175,6 +178,8 @@ export default function BountyDetail() {
   return (
     <div className="pt-40 pb-24 px-6">
       <Confetti active={showConfetti} />
+      <TransactionModal open={modalOpen} title={modalTitle} steps={modalSteps}
+        onClose={() => { setModalOpen(false); load(); }} />
       <div className="max-w-3xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <button onClick={() => navigate(-1)} className="btn-ghost mb-6">← Back</button>
@@ -220,7 +225,7 @@ export default function BountyDetail() {
             </div>
 
             {bounty.referrer !== '0x0000000000000000000000000000000000000000' && (
-              <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700">
+              <div className="mb-6 p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl text-xs text-amber-700 dark:text-amber-400">
                 Referrer: {formatAddress(bounty.referrer)} — they get 0.5% when completed.
               </div>
             )}
@@ -235,9 +240,9 @@ export default function BountyDetail() {
             )}
 
             {bounty.proof && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <p className="text-xs font-medium text-blue-700 mb-1">Submitted Proof</p>
-                <p className="text-sm text-blue-800 break-words">{bounty.proof}</p>
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl">
+                <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-1">Submitted Proof</p>
+                <p className="text-sm text-blue-800 dark:text-blue-300 break-words">{bounty.proof}</p>
               </div>
             )}
 
@@ -252,39 +257,39 @@ export default function BountyDetail() {
                 <textarea className="input-premium min-h-[100px] mb-3" placeholder="IPFS hash, link to deliverable, or description of completed work..."
                   value={proof} onChange={e => setProof(e.target.value)} />
                 <button onClick={handleSubmitProof} disabled={actionLoading || !proof.trim()}
-                  className="btn-primary w-full">
+                  className="btn-primary w-full cursor-pointer">
                   {actionLoading ? 'Submitting...' : 'Submit Proof'}
                 </button>
               </div>
             )}
 
             {canApprove && (
-              <div className="mt-6 p-6 bg-emerald-50 border border-emerald-200 rounded-xl">
-                <h3 className="font-semibold text-emerald-800 mb-2">Review Work</h3>
-                <p className="text-sm text-emerald-700 mb-4">
+              <div className="mt-6 p-6 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl">
+                <h3 className="font-semibold text-emerald-800 dark:text-emerald-400 mb-2">Review Work</h3>
+                <p className="text-sm text-emerald-700 dark:text-emerald-300 mb-4">
                   The worker has submitted their proof. Approve to release {formatCELO(bounty.reward)} {currencyLabel} from escrow.
                 </p>
                 <button onClick={handleApprove} disabled={actionLoading}
-                  className="w-full py-4 rounded-xl font-semibold text-lg text-white bg-gradient-to-r from-accent-indigo to-accent-emerald disabled:opacity-50 transition-all">
+                  className="w-full py-4 rounded-xl font-semibold text-lg text-white bg-gradient-to-r from-accent-indigo to-accent-emerald disabled:opacity-50 transition-all cursor-pointer">
                   {actionLoading ? 'Processing...' : `Approve & Release Payment`}
                 </button>
               </div>
             )}
 
             {bounty.status === 2 && (
-              <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
-                <p className="text-emerald-700 font-medium">✅ Bounty completed! Payment released to worker.</p>
+              <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl text-center">
+                <p className="text-emerald-700 dark:text-emerald-400 font-medium">✅ Bounty completed! Payment released to worker.</p>
               </div>
             )}
 
             {bounty.status === 3 && (
-              <div className="mt-6 p-4 bg-slate-100 rounded-xl text-center">
-                <p className="text-slate-500 font-medium">Bounty cancelled. Funds returned to poster.</p>
+              <div className="mt-6 p-4 bg-slate-100 dark:bg-slate-500/10 rounded-xl text-center">
+                <p className="text-slate-500 dark:text-slate-400 font-medium">Bounty cancelled. Funds returned to poster.</p>
               </div>
             )}
 
             <div className="mt-6 flex items-center justify-between text-sm text-text-dim border-t border-app-border pt-6">
-              <button onClick={handleShare} className="flex items-center gap-2 hover:text-accent-indigo transition-colors">
+              <button onClick={handleShare} className="flex items-center gap-2 hover:text-accent-indigo transition-colors cursor-pointer">
                 <span>🔗</span> Share with Referral Link
               </button>
               <span className="text-xs text-text-pale">2.5% platform fee · 0.5% referral bonus</span>

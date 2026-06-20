@@ -8,12 +8,19 @@ import Home from './pages/Home';
 import PostBounty from './pages/PostBounty';
 import BountyDetail from './pages/BountyDetail';
 import MyBounties from './pages/MyBounties';
+import OnboardingTooltip from './components/OnboardingTooltip';
 
 function Navigation() {
   const location = useLocation();
-  const { address, connect, disconnect, celoBalance, gdBalance } = useWallet();
+  const { address, connect, disconnect, celoBalance, gdBalance, refresh } = useWallet();
   const [open, setOpen] = useState(false);
+  const [dark, setDark] = useState(() => localStorage.getItem('tasky_theme') === 'dark');
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark);
+    localStorage.setItem('tasky_theme', dark ? 'dark' : 'light');
+  }, [dark]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -49,11 +56,17 @@ function Navigation() {
             ))}
           </div>
 
-          <div className="flex items-center gap-3" ref={ref}>
+          <div className="flex items-center gap-2" ref={ref}>
+            <button onClick={() => setDark(!dark)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-text-pale hover:text-accent-indigo hover:bg-app-hover transition-all text-lg cursor-pointer"
+              title={dark ? 'Light mode' : 'Dark mode'}>
+              {dark ? '☀️' : '🌙'}
+            </button>
+
             {address ? (
               <div className="relative">
                 <button onClick={() => setOpen(!open)}
-                  className="flex items-center gap-2 bg-app-hover hover:bg-app-border transition-colors px-4 py-2 rounded-full text-sm font-mono text-text-main">
+                  className="flex items-center gap-2 bg-app-hover hover:bg-app-border transition-colors px-4 py-2 rounded-full text-sm font-mono text-text-main cursor-pointer">
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
                   {address.slice(0, 6)}...{address.slice(-4)}
                   <motion.span animate={{ rotate: open ? 180 : 0 }} className="text-xs text-text-pale">▼</motion.span>
@@ -62,24 +75,30 @@ function Navigation() {
                   {open && (
                     <motion.div initial={{ opacity: 0, y: -8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -8, scale: 0.96 }} transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl border border-app-border shadow-floating p-4 space-y-3">
+                      className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-app-card rounded-2xl border border-app-border shadow-floating p-4 space-y-3">
                       <div>
                         <p className="text-[10px] uppercase tracking-wider text-text-pale font-medium mb-1.5">Connected Wallet</p>
                         <div className="flex items-center justify-between bg-app-hover rounded-xl px-3 py-2.5">
                           <span className="font-mono text-sm text-text-main">{address.slice(0, 6)}...{address.slice(-4)}</span>
                           <button onClick={() => { navigator.clipboard.writeText(address); toast.success('Address copied'); }}
-                            className="text-xs text-accent-indigo hover:text-accent-indigo-hover font-medium transition-colors">
+                            className="text-xs text-accent-indigo hover:text-accent-indigo-hover font-medium transition-colors cursor-pointer">
                             Copy
                           </button>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="bg-app-hover rounded-xl p-3">
-                          <p className="text-[10px] text-text-pale font-medium">CELO</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] text-text-pale font-medium">CELO</p>
+                            <button onClick={() => refresh()} className="text-text-pale hover:text-accent-indigo transition-colors text-xs cursor-pointer" title="Refresh">↻</button>
+                          </div>
                           <p className="font-bold text-sm text-accent-indigo mt-0.5">{celoBalance}</p>
                         </div>
                         <div className="bg-app-hover rounded-xl p-3">
-                          <p className="text-[10px] text-text-pale font-medium">G$</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] text-text-pale font-medium">G$</p>
+                            <button onClick={() => refresh()} className="text-text-pale hover:text-accent-emerald transition-colors text-xs cursor-pointer" title="Refresh">↻</button>
+                          </div>
                           <p className="font-bold text-sm text-accent-emerald mt-0.5">{gdBalance}</p>
                         </div>
                       </div>
@@ -88,7 +107,7 @@ function Navigation() {
                         📋 My Bounties
                       </Link>
                       <button onClick={() => { disconnect(); setOpen(false); }}
-                        className="w-full text-sm text-red-500 hover:text-red-600 font-medium py-2.5 rounded-xl hover:bg-red-50 transition-colors">
+                        className="w-full text-sm text-red-500 hover:text-red-600 font-medium py-2.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors cursor-pointer">
                         Disconnect
                       </button>
                     </motion.div>
@@ -144,12 +163,13 @@ function App() {
           duration: 4000,
           style: { borderRadius: '12px', padding: '12px 16px', fontSize: '14px' },
         }} />
-        <div className="min-h-screen bg-app-bg grid-subtle selection:bg-accent-indigo/10 selection:text-accent-indigo pb-20 md:pb-0">
+        <div className="min-h-screen bg-app-bg grid-subtle selection:bg-accent-indigo/10 selection:text-accent-indigo pb-20 md:pb-0 transition-colors duration-300">
           <Navigation />
           <main className="relative">
             <AnimatedRoutes />
           </main>
-          <footer className="border-t border-app-border py-12 px-6 bg-white">
+          <OnboardingTooltip />
+          <footer className="border-t border-app-border py-12 px-6 bg-white dark:bg-app-surface transition-colors duration-300">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
               <span className="font-serif font-bold text-xl tracking-tighter text-text-main">
                 <span className="italic">Task</span>y

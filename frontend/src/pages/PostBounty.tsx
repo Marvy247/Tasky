@@ -1,11 +1,13 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { createWalletClient, custom, parseEther } from 'viem';
 import { celo } from 'viem/chains';
 import { CONTRACTS, BOUNTYBOARD_ABI, GD_ABI, publicClient, connectWallet } from '../lib/celo';
 import { useWallet } from '../context/WalletContext';
+import TransactionModal from '../components/TransactionModal';
+import type { Step } from '../components/TransactionModal';
 
 async function getWalletClient() {
   const eth = (window as any).ethereum;
@@ -13,8 +15,16 @@ async function getWalletClient() {
   return createWalletClient({ chain: celo, transport: custom(eth) });
 }
 
+function estimateDate(deadlineBlocks: number): string {
+  if (!deadlineBlocks || deadlineBlocks < 100) return '';
+  const secs = deadlineBlocks * 5;
+  const d = new Date(Date.now() + secs * 1000);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 export default function PostBounty() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { address, refresh } = useWallet();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -23,6 +33,13 @@ export default function PostBounty() {
   const [deadline, setDeadline] = useState('1000');
   const [referrer, setReferrer] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [steps, setSteps] = useState<Step[]>([]);
+
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref && ref.startsWith('0x') && ref.length === 42) setReferrer(ref);
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,15 +47,23 @@ export default function PostBounty() {
     if (!addr) { addr = await connectWallet(); if (!addr) return; }
 
     const rewardWei = parseEther(reward);
-    const feeBps = 250n; // 2.5%
+    const feeBps = 250n;
     const fee = (rewardWei * feeBps) / 10000n;
     const total = rewardWei + fee;
 
+    const isG$ = currency === 'G$';
+    const newSteps: Step[] = isG$
+      ? [{ label: 'Approve G$ spending', status: 'pending' }, { label: 'Post bounty', status: 'pending' }, { label: 'Confirmed', status: 'pending' }]
+      : [{ label: 'Post bounty', status: 'pending' }, { label: 'Confirmed', status: 'pending' }];
+    setSteps(newSteps);
+    setModalOpen(true);
     setSubmitting(true);
+
     try {
       const wc = await getWalletClient();
 
-      if (currency === 'G$') {
+      if (isG$) {
+        setSteps(prev => prev.map((s, i) => i === 0 ? { ...s, status: 'active' } : s));
         const allowance = await publicClient.readContract({
           address: CONTRACTS.GDollar, abi: GD_ABI,
           functionName: 'allowance',
@@ -51,14 +76,15 @@ export default function PostBounty() {
             args: [CONTRACTS.BountyBoard, total],
             account: addr as `0x${string}`,
           });
-          toast.loading('Approving G$...', { id: 'approve' });
           await publicClient.waitForTransactionReceipt({ hash: appTx });
-          toast.success('G$ approved!', { id: 'approve' });
         }
+        setSteps(prev => prev.map((s, i) => i === 0 ? { ...s, status: 'done' } : s));
       }
 
-      const refAddr = referrer && referrer.length === 42 ? referrer as `0x${string}` : '0x0000000000000000000000000000000000000000' as `0x${string}`;
+      const stepIdx = isG$ ? 1 : 0;
+      setSteps(prev => prev.map((s, i) => i === stepIdx ? { ...s, status: 'active' } : s));
 
+      const refAddr = referrer && referrer.length === 42 ? referrer as `0x${string}` : '0x0000000000000000000000000000000000000000' as `0x${string}`;
       const hash = await wc.writeContract({
         address: CONTRACTS.BountyBoard, abi: BOUNTYBOARD_ABI,
         functionName: 'postBounty',
@@ -66,14 +92,15 @@ export default function PostBounty() {
         value: currency === 'CELO' ? total : 0n,
         account: addr as `0x${string}`,
       });
-
-      toast.loading('Posting bounty...', { id: 'post' });
       await publicClient.waitForTransactionReceipt({ hash });
-      toast.success('Bounty posted! 🎉', { id: 'post' });
+
+      setSteps(prev => prev.map(s => s.status === 'active' ? { ...s, status: 'done' } : s));
+      setSteps(prev => prev.map((s, i) => i === prev.length - 1 ? { ...s, status: 'done' } : s));
+
       refresh();
-      navigate('/');
     } catch (e: any) {
-      toast.error(e.shortMessage || 'Failed to post', { id: 'post' });
+      setSteps(prev => prev.map(s => s.status === 'active' ? { ...s, status: 'error' } : s));
+      toast.error(e.shortMessage || 'Failed to post');
     } finally {
       setSubmitting(false);
     }
@@ -81,9 +108,12 @@ export default function PostBounty() {
 
   const deadlineBlocks = parseInt(deadline);
   const estimatedDuration = deadlineBlocks ? `${(deadlineBlocks * 5 / 3600).toFixed(1)} hours` : '—';
+  const deadlineDate = estimateDate(deadlineBlocks);
 
   return (
     <div className="pt-40 pb-24 px-6">
+      <TransactionModal open={modalOpen} title="Posting Bounty" steps={steps}
+        onClose={() => { setModalOpen(false); if (steps.every(s => s.status === 'done')) navigate('/'); }} />
       <div className="max-w-2xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <button onClick={() => navigate(-1)} className="btn-ghost mb-6">← Back</button>
@@ -135,7 +165,7 @@ export default function PostBounty() {
 
             <div>
               <label className="block text-sm font-medium text-text-dim mb-2">
-                Deadline (blocks) * <span className="text-text-pale">≈ {estimatedDuration}</span>
+                Deadline (blocks) * <span className="text-text-pale">≈ {estimatedDuration}{deadlineDate ? ` · ${deadlineDate}` : ''}</span>
               </label>
               <input className="input-premium" type="number" min="100" placeholder="1000"
                 value={deadline} onChange={e => setDeadline(e.target.value)} required />

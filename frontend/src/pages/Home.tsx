@@ -35,7 +35,11 @@ export default function Home() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const id = setInterval(load, 30000);
+    return () => clearInterval(id);
+  }, []);
 
   const filtered = bounties
     .filter(b => {
@@ -159,7 +163,11 @@ export default function Home() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-5xl mb-4">🔍</p>
+            <svg className="w-16 h-16 mx-auto mb-6 text-text-pale" fill="none" viewBox="0 0 64 64" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="32" cy="32" r="28" strokeDasharray="4 3" />
+              <path d="M24 32l6 6 10-10" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="32" cy="22" r="3" fill="currentColor" opacity="0.3" />
+            </svg>
             <p className="text-xl text-text-dim">
               {search ? 'No bounties match your search' : `No open bounties${filter !== 'all' ? ` in ${filter}` : ''}`}
             </p>

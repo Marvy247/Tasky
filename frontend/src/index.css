@@ -1,22 +1,23 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Outfit:wght@100;200;300;400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap');
 
-/* Tailwind v4 Theme Configuration */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  /* Colors - Nu White Theme */
+  /* Colors - Light */
   --color-app-bg: #FCFCFD;
   --color-app-surface: #FFFFFF;
   --color-app-card: #FFFFFF;
   --color-app-border: #E5E7EB;
   --color-app-hover: #F9FAFB;
-  
+
   /* Accents */
   --color-accent-indigo: #4F46E5;
   --color-accent-indigo-hover: #4338CA;
   --color-accent-gold: #D97706;
   --color-accent-gold-hover: #B45309;
   --color-accent-emerald: #059669;
-  
+
   /* Text */
   --color-text-main: #111827;
   --color-text-dim: #4B5563;
@@ -27,15 +28,33 @@
   --font-sans: 'Outfit', sans-serif;
   --font-display: 'Syne', sans-serif;
 
-  /* Shadows - Soft & Premium */
+  /* Shadows */
   --shadow-premium: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   --shadow-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
   --shadow-glow-indigo: 0 0 20px rgba(79, 70, 229, 0.1);
+  --shadow-glow-emerald: 0 0 20px rgba(5, 150, 105, 0.1);
 
   /* Animations */
   --animate-reveal: reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-float: float 6s ease-in-out infinite;
   --animate-soft-pulse: softPulse 3s ease-in-out infinite;
+}
+
+@variant dark {
+  @theme {
+    --color-app-bg: #0D0F14;
+    --color-app-surface: #16181F;
+    --color-app-card: #1A1D25;
+    --color-app-border: #272A32;
+    --color-app-hover: #1E2128;
+    --color-text-main: #E8E9ED;
+    --color-text-dim: #9295A0;
+    --color-text-pale: #636673;
+    --shadow-premium: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+    --shadow-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.15);
+    --shadow-glow-indigo: 0 0 20px rgba(79, 70, 229, 0.05);
+    --shadow-glow-emerald: 0 0 20px rgba(5, 150, 105, 0.05);
+  }
 }
 
 @keyframes reveal {
@@ -66,6 +85,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 h1, h2, h3, .font-serif {
@@ -82,63 +102,68 @@ h1, h2, h3, .font-serif {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: background 0.3s, border-color 0.3s;
 }
 
-/* Grid Background - Subtle */
+.dark .glass {
+  background: rgba(22, 24, 31, 0.85);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Grid Background */
 .grid-subtle {
   background-image: radial-gradient(#E5E7EB 1px, transparent 1px);
   background-size: 40px 40px;
+  transition: background-image 0.3s;
+}
+
+.dark .grid-subtle {
+  background-image: radial-gradient(#272A32 1px, transparent 1px);
 }
 
 /* Custom Scrollbar */
-*::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-*::-webkit-scrollbar-track {
-  background: var(--color-app-bg);
-}
-
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb {
   background: var(--color-app-border);
   border-radius: 10px;
 }
-
 *::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-pale);
 }
 
-/* Hide scrollbar utility */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* Buttons */
 .btn-primary {
-  @apply px-8 py-3.5 bg-accent-indigo text-white font-semibold rounded-full transition-all duration-300 hover:bg-accent-indigo-hover hover:shadow-floating active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  @apply px-8 py-3.5 bg-accent-indigo text-white font-semibold rounded-full transition-all duration-300 hover:bg-accent-indigo-hover hover:shadow-floating hover:shadow-glow-indigo active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer;
 }
 
 .btn-secondary {
-  @apply px-8 py-3.5 bg-white text-accent-indigo border border-app-border font-semibold rounded-full transition-all duration-300 hover:bg-app-hover hover:shadow-premium active:scale-95 disabled:opacity-50;
+  @apply px-8 py-3.5 bg-white text-accent-indigo border border-app-border font-semibold rounded-full transition-all duration-300 hover:bg-app-hover hover:shadow-premium active:scale-95 disabled:opacity-50 cursor-pointer;
+}
+
+.dark .btn-secondary {
+  @apply bg-app-surface;
 }
 
 .btn-ghost {
-  @apply px-4 py-2.5 text-text-dim hover:text-accent-indigo hover:bg-app-hover rounded-xl transition-all duration-200;
+  @apply px-4 py-2.5 text-text-dim hover:text-accent-indigo hover:bg-app-hover rounded-xl transition-all duration-200 cursor-pointer;
 }
 
 /* Cards */
 .card-premium {
-  @apply bg-white border border-app-border rounded-3xl p-8 transition-all duration-500 hover:shadow-floating hover:border-accent-indigo/20;
+  @apply bg-app-card border border-app-border rounded-3xl p-8 transition-all duration-500 hover:shadow-floating hover:border-accent-indigo/20 hover:-translate-y-0.5;
 }
 
 /* Form Elements */
 .input-premium {
   @apply w-full px-5 py-4 bg-white border border-app-border rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-indigo/10 focus:border-accent-indigo transition-all duration-200 placeholder:text-text-pale text-text-main font-medium;
+}
+
+.dark .input-premium {
+  @apply bg-app-surface;
 }
 
 /* Animations Helpers */
@@ -153,14 +178,35 @@ h1, h2, h3, .font-serif {
 .stagger-4 { animation-delay: 0.4s; }
 .stagger-5 { animation-delay: 0.5s; }
 
-/* Focus visible for accessibility */
 :focus-visible {
   outline: 2px solid var(--color-accent-indigo);
   outline-offset: 2px;
 }
 
-/* Selection styling */
 ::selection {
   background-color: rgba(79, 70, 229, 0.1);
   color: var(--color-accent-indigo);
+}
+
+/* Transaction Modal */
+@keyframes check-in {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Onboarding pulse */
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(79, 70, 229, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+.pulse-ring {
+  animation: pulse-ring 2s infinite;
 }

@@ -57,10 +57,14 @@ export default function MyBounties() {
 
   if (!address) return (
     <div className="pt-40 pb-24 px-6 text-center">
-      <p className="text-5xl mb-4">🔐</p>
+      <svg className="w-16 h-16 mx-auto mb-6 text-text-pale" fill="none" viewBox="0 0 64 64" stroke="currentColor" strokeWidth="1.5">
+        <rect x="12" y="12" width="40" height="40" rx="8" />
+        <path d="M24 32l6 6 10-10" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="32" cy="22" r="3" fill="currentColor" opacity="0.3" />
+      </svg>
       <h2 className="text-2xl font-bold mb-2">Connect Wallet</h2>
       <p className="text-text-dim mb-6">Connect your wallet to view your bounties.</p>
-      <button onClick={connect} className="btn-primary">Connect Wallet</button>
+      <button onClick={connect} className="btn-primary cursor-pointer">Connect Wallet</button>
     </div>
   );
 
@@ -97,7 +101,11 @@ export default function MyBounties() {
             <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="card-premium animate-pulse h-24" />)}</div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-4xl mb-4">📭</p>
+              <svg className="w-16 h-16 mx-auto mb-6 text-text-pale" fill="none" viewBox="0 0 64 64" stroke="currentColor" strokeWidth="1.5">
+                <rect x="8" y="16" width="48" height="40" rx="4" />
+                <path d="M32 8v8M24 8h16" strokeLinecap="round" />
+                <path d="M24 34h16M24 42h10" strokeLinecap="round" />
+              </svg>
               <p className="text-text-dim">No bounties found</p>
               <Link to="/post" className="btn-primary mt-4 inline-block">Post your first bounty</Link>
             </div>
