@@ -123,6 +123,35 @@ export interface Bounty {
 export const formatCELO = (wei: bigint): string =>
   parseFloat(formatEther(wei)).toFixed(4);
 
+let latestBlockRef: { number: bigint; timestamp: bigint } | null = null;
+
+export async function getBlockNumber(): Promise<bigint> {
+  return await publicClient.getBlockNumber();
+}
+
+async function refreshBlockRef(): Promise<void> {
+  const block = await publicClient.getBlock({ blockTag: 'latest' });
+  latestBlockRef = { number: block.number!, timestamp: block.timestamp };
+}
+
+export async function blockToDate(blockNumber: bigint): Promise<Date> {
+  if (!latestBlockRef) await refreshBlockRef();
+  const ref = latestBlockRef!;
+  const diff = Number(blockNumber - ref.number);
+  const timestampMs = (Number(ref.timestamp) + diff * 5) * 1000;
+  return new Date(timestampMs);
+}
+
+export function formatBlockDate(date: Date): string {
+  const now = new Date();
+  const diffDays = Math.floor((date.getTime() - now.getTime()) / 86400000);
+  if (diffDays < 0) return 'Expired';
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Tomorrow';
+  if (diffDays <= 7) return `In ${diffDays} days`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export const formatAddress = (address: string): string =>
   `${address.slice(0, 6)}...${address.slice(-4)}`;
 

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { createWalletClient, custom } from 'viem';
 import { celo } from 'viem/chains';
-import { getBounty, type Bounty, CONTRACTS, BOUNTYBOARD_ABI, publicClient, formatCELO, formatAddress, connectWallet } from '../lib/celo';
+import { getBounty, type Bounty, CONTRACTS, BOUNTYBOARD_ABI, publicClient, formatCELO, formatAddress, connectWallet, blockToDate, formatBlockDate } from '../lib/celo';
 import { useWallet } from '../context/WalletContext';
 
 async function getWalletClient() {
@@ -21,6 +21,8 @@ export default function BountyDetail() {
   const navigate = useNavigate();
   const { address, refresh } = useWallet();
   const [bounty, setBounty] = useState<Bounty | null>(null);
+  const [deadlineDate, setDeadlineDate] = useState('');
+  const [createdDate, setCreatedDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [proof, setProof] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
@@ -30,6 +32,10 @@ export default function BountyDetail() {
     setLoading(true);
     const b = await getBounty(parseInt(id));
     setBounty(b);
+    if (b) {
+      setDeadlineDate(formatBlockDate(await blockToDate(b.deadline)));
+      setCreatedDate(formatBlockDate(await blockToDate(b.createdAt)));
+    }
     setLoading(false);
   };
 
@@ -191,11 +197,11 @@ export default function BountyDetail() {
               </div>
               <div>
                 <p className="text-text-pale text-xs">Deadline</p>
-                <p className="mt-0.5">Block #{bounty.deadline.toString()}</p>
+                <p className="mt-0.5">{deadlineDate}</p>
               </div>
               <div>
                 <p className="text-text-pale text-xs">Created</p>
-                <p className="mt-0.5">Block #{bounty.createdAt.toString()}</p>
+                <p className="mt-0.5">{createdDate}</p>
               </div>
             </div>
 

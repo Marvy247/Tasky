@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getAllBounties, type Bounty, formatCELO } from '../lib/celo';
+import { getAllBounties, type Bounty, formatCELO, blockToDate, formatBlockDate } from '../lib/celo';
 import { useWallet } from '../context/WalletContext';
 
 const statusLabels = ['Open', 'Claimed', 'Completed', 'Cancelled'];
@@ -9,13 +9,20 @@ const statusColors = ['bg-emerald-500', 'bg-amber-500', 'bg-blue-500', 'bg-slate
 
 export default function Home() {
   const [bounties, setBounties] = useState<Bounty[]>([]);
+  const [dates, setDates] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'CELO' | 'G$'>('all');
   const { address, connect } = useWallet();
 
   const load = async () => {
     setLoading(true);
-    setBounties(await getAllBounties());
+    const bs = await getAllBounties();
+    setBounties(bs);
+    const dateMap: Record<number, string> = {};
+    for (const b of bs) {
+      dateMap[b.id] = formatBlockDate(await blockToDate(b.deadline));
+    }
+    setDates(dateMap);
     setLoading(false);
   };
 
@@ -106,7 +113,7 @@ export default function Home() {
                   <p className="text-sm text-text-dim line-clamp-2 mb-4">{bounty.description}</p>
                   <div className="flex items-center justify-between text-xs text-text-pale">
                     <span>#{bounty.id}</span>
-                    <span>Deadline: block {bounty.deadline.toString()}</span>
+                    <span>Deadline: {dates[bounty.id] || '...'}</span>
                   </div>
                 </Link>
               </motion.div>
