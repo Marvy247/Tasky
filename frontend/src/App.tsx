@@ -14,7 +14,11 @@ function Navigation() {
   const location = useLocation();
   const { address, connect, disconnect, celoBalance, gdBalance, refresh } = useWallet();
   const [open, setOpen] = useState(false);
-  const [dark, setDark] = useState(() => localStorage.getItem('tasky_theme') === 'dark');
+  const [dark, setDark] = useState(() => {
+    const stored = localStorage.getItem('tasky_theme');
+    if (!stored) return false;
+    return stored === 'dark';
+  });
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
